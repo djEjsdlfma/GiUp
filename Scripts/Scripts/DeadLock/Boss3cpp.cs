@@ -1,0 +1,503 @@
+﻿/*#include "pch.h"
+#include "Boss3.h"
+#include "Boss3Core.h"
+#include "ExploseProjectile.h"
+#include "BossProjectile.h"
+#include "SceneManager.h"
+#include "BIgBullet.h"
+#include "Scene.h"
+#include "FollowProjectile.h"
+#include "EventBus.h"
+#include "ResourceManager.h"
+#include "Animator.h"
+#include "Animation.h"
+
+using System.Reflection.Emit;
+using System.Resources;
+using static System.Formats.Asn1.AsnWriter;
+
+Boss3::Boss3()
+    : m_isCorePhase(false),
+    m_isStartPhase(true),
+    m_fireTimer1(0.f),
+    m_angle1(0.f),
+    m_fireTimer2(0.f),
+    m_angle2(0.f)
+{
+    GET_SINGLE(SceneManager)->GetCurScene()->StartShake(0, 0);
+    AddComponent<Animator>();
+    m_animator = GetComponent<Animator>();
+
+
+    m_pTexture = GET_SINGLE(ResourceManager)->GetTexture(L"boss3");
+    m_BATexture = GET_SINGLE(ResourceManager)->GetTexture(L"boss3Attack");
+    m_BFTexture = GET_SINGLE(ResourceManager)->GetTexture(L"boss3Fold");
+    m_BUFTexture = GET_SINGLE(ResourceManager)->GetTexture(L"boss3UnFold");
+    m_BDTexture = GET_SINGLE(ResourceManager)->GetTexture(L"boss3Death");
+
+
+    m_animator->CreateAnimation
+    (L"Idle"
+        , m_pTexture
+        , { 0.f,0.f }
+        , { 128.f,256.f }
+        , { 128.f,0.f }
+    , 5, 0.1f);
+    m_animator->CreateAnimation
+    (L"bossAttack"
+        , m_BATexture
+        , { 0.f,0.f }
+        , { 128.f,256.f }
+        , { 128.f,0.f }
+    , 5, 0.1f);
+    m_animator->CreateAnimation
+    (L"Fold"
+        , m_BFTexture
+        , { 0.f,0.f }
+        , { 128.f,256.f }
+        , { 128.f,0.f }
+    , 6, 0.1f);
+    m_animator->CreateAnimation
+    (L"UnFold"
+        , m_BUFTexture
+        , { 0.f,0.f }
+        , { 128.f,256.f }
+        , { 128.f,0.f }
+    , 6, 0.1f);
+
+    m_animator->Play(L"UnFold", PlayMode::Once, 1, 1.f);
+
+    std::shared_ptr<Scene> scene = GET_SINGLE(SceneManager)->GetCurScene();
+
+    for (int i = 0; i < 3; ++i)
+    {
+        Button* button = new Button(this);  //위치에 따라 생성
+
+        Vec2 pos;
+        pos.x = 320 * (i + 1);
+        pos.y = 15;
+
+        button->SetPos(pos);
+        button->SetSize({ 60.f, 60.f });
+
+    scene->AddObject(button, Layer::BUTTON);
+}
+m_Buttons.clear();
+
+if (m_animator)
+{
+    Animation* cur = m_animator->GetCurrent();
+    if (cur && cur->IsFinished())
+    {
+        StartPattern();
+    }
+}
+InitShields();
+
+m_patternCount = 8;
+} 
+
+Boss3::~Boss3()
+{
+}
+
+void Boss3::StartRandomPattern()
+{
+    m_setPos = false;
+}
+
+void Boss3::UpdatePattern()
+{
+    if (m_isCorePhase)
+        return; // 코어가 나오면 패턴 완전 정지
+    if (m_isStartPhase)
+    {
+        StartPattern();
+        return;
+    }
+
+    if (m_startDelayTimer < m_startDelay)
+    {
+        m_startDelayTimer += fDT;
+        return; // 아직 대기 중이므로 패턴 실행 X
+    }
+
+    switch (m_curPattern)
+    {
+        case Boss3Pattern::PATTERN1:
+            Pattern1();
+            if (m_patternTimer > 2.f)
+            {
+                EndPattern();
+                m_curPattern = Boss3Pattern::PATTERN2;
+            }
+            break;
+
+        case Boss3Pattern::PATTERN2:
+            Pattern2();
+            if (m_patternTimer > 3.f)
+            {
+                EndPattern();
+                m_curPattern = Boss3Pattern::PATTERN3;
+            }
+            break;
+
+        case Boss3Pattern::PATTERN3:
+            Pattern3();
+            if (m_patternTimer > 1.5f)
+            {
+                EndPattern();
+                m_curPattern = Boss3Pattern::PATTERN4;
+            }
+            break;
+        case Boss3Pattern::PATTERN4:
+            Pattern4();
+            if (m_patternTimer > 2.f)
+            {
+                EndPattern();
+                m_curPattern = Boss3Pattern::PATTERN5;
+            }
+            break;
+
+        case Boss3Pattern::PATTERN5:
+            Pattern5();
+            if (m_patternTimer > 3.f)
+            {
+                EndPattern();
+                m_curPattern = Boss3Pattern::PATTERN1;
+            }
+            break;
+    }
+}
+
+void Boss3::EndPattern()
+{
+    m_animator->Play(L"UnFold", PlayMode::Once, 1, 1.f);
+    m_isShotFollow = false;
+    m_isCooldown = true;
+    m_shotDealy = 0.f;
+    m_patternTimer = 0.f;
+    m_doShake = false;
+    m_doFire = false;
+    m_fireTimer1 = 0.f;
+    if (m_patternCount > m_maxPatternCount && !m_isDying)
+    {
+        StartDeathSequence();
+        SpawnCore();
+    }
+}
+
+void Boss3::Render(HDC _hdc)
+{
+    ComponentRender(_hdc);
+}
+
+void Boss3::StartPattern()
+{
+    m_fireTimer1 += fDT;
+    if (m_fireTimer1 < 1.f) return;
+    m_fireTimer1 = 0.f;
+
+    Vec2 center = GetPos();
+
+    Vec2 dir = { };
+
+    auto* proj = new ExploseProjectile;
+    proj->SetPos(center);
+    proj->SetSize({ 30.f, 30.f });
+    proj->SetDir(dir);
+    proj->SetGravity(false);
+    GET_SINGLE(SceneManager)->GetCurScene()->AddObject(proj, Layer::BOSSPROJECTILE);
+    m_isStartPhase = false;
+    m_curPattern = Boss3Pattern::PATTERN1;
+
+}
+
+void Boss3::Pattern1()
+{
+    Vec2 pos = GetPos();
+    float nowPosition = pos.x;
+
+    while (!m_setPos)
+    {
+        int randPos = rand() % 3;
+        switch (randPos)
+        {
+            case 0:
+                m_position = 320.f;
+                break;
+            case 1:
+                m_position = 640.f;
+                break;
+            case 2:
+                m_position = 960.f;
+                break;
+        }
+
+        if (nowPosition != m_position)
+        {
+            m_setPos = true;
+            SetPos({ m_position, pos.y });
+            break;
+        }
+    }
+}
+
+void Boss3::Pattern2()
+{
+    if (m_doFire == false)
+    {
+        m_animator->Play(L"bossAttack");
+        m_doFire = true;
+    }
+    Vec2 center = GetPos();
+
+    Vec2 dir = { };
+
+    if (!m_isShotFollow)
+    {
+        m_isShotFollow = true;
+        auto* proj = new FollowProjectile;
+        proj->SetPos(center);
+        proj->SetSize({ 30.f, 30.f });
+        proj->SetDir(dir);
+        GET_SINGLE(SceneManager)->GetCurScene()->AddObject(proj, Layer::BOSSPROJECTILE);
+    }
+}
+
+void Boss3::Pattern3()
+{
+    Vec2 playerPos;
+
+    for (UINT i = 0; i < (UINT)Layer::END; ++i)
+    {
+        const auto&objects = GET_SINGLE(SceneManager)->GetCurScene()->GetLayerObjects((Layer)i);
+        for (Object* obj : objects)
+        {
+            if (!obj)
+                continue;
+            if ((Layer)i == Layer::PLAYER)
+                playerPos = obj->GetPos();
+        }
+    }
+
+    if (m_doFire == false)
+    {
+        Vec2 pos = GetPos();
+        SetPos({ playerPos.x, pos.y });
+        m_animator->Play(L"UnFold", PlayMode::Once, 1, 1.f);
+        m_doFire = true;
+    }
+
+
+    m_fireTimer1 += fDT;
+    if (m_fireTimer1 < 1.f) return;
+    m_fireTimer1 = 0.f;
+
+    Vec2 center = GetPos();
+
+    Vec2 dir = { };
+
+    for (int i = 0; i < 20; i++)
+    {
+        float dx = rand() % 80 + 10;
+        float dy = rand() % 300 + 250;
+
+        if (i % 2 == 0)
+            dx *= -1;
+
+        auto* proj = new ExploseProjectile;
+        proj->SetPos(center);
+        proj->SetSize({ 30.f, 30.f });
+    proj->SetForce({ dx, -dy});
+    proj->SetGravity(true);
+    proj->SetDivision(true);
+    GET_SINGLE(SceneManager)->GetCurScene()->AddObject(proj, Layer::BOSSPROJECTILE);
+}
+}
+
+void Boss3::Pattern4()
+{
+    SetPos({ m_position, 120.f });
+    if (m_doFire == false)
+    {
+        m_animator->Play(L"UnFold", PlayMode::Once, 1, 1.f);
+        m_doFire = true;
+    }
+    else
+    {
+        CheckAnimationEnd(L"bossAttack", true);
+    }
+
+
+    m_shotDealy += fDT;
+    if (m_shotDealy < 0.2f) return;
+
+    float dx = rand() % 1000 - 500;
+    int ran = rand() % 10 + 3;
+    Vec2 center = GetPos();
+    auto* proj = new ExploseProjectile;
+    proj->SetPos(center);
+    proj->SetSize({ 30.f, 30.f });
+    proj->SetDir({ dx, 1000.f });
+    proj->SetGravity(false);
+    proj->SetDivision(true);
+    proj->SetRigid(false);
+    proj->SetValue(ran);
+    GET_SINGLE(SceneManager)->GetCurScene()->AddObject(proj, Layer::BOSSPROJECTILE);
+    m_shotDealy = 0.f;
+
+
+}
+
+void Boss3::Pattern5()
+{
+    if (m_doShake == false)
+    {
+        m_animator->Play(L"bossAttack");
+        GET_SINGLE(SceneManager)->GetCurScene()->StartShake(0.3f, 70.f);
+        EventBus::Invoke(L"PlayerBounce");
+
+        auto* proj = new BIgBullet;
+        proj->SetPos({ 1400.f, 500.f});
+        proj->SetSize({ 500.f, 500.f });
+        proj->SetDir({ -150.f, 500.f});
+        GET_SINGLE(SceneManager)->GetCurScene()->AddObject(proj, Layer::BOSSPROJECTILE);
+
+        m_doShake = true;
+    }
+
+}
+
+void Boss3::SpawnCore()
+{
+    m_isCorePhase = true;
+
+    Vec2 vec = GetPos();
+
+    auto* core = new Boss3Core(this);
+    core->SetPos({ vec.x, vec.y + 32.f});
+    core->SetSize({ 100.f, 100.f });
+    GET_SINGLE(SceneManager)->GetCurScene()->AddObject(core, Layer::BOSSCORE);
+}
+
+void Boss3::CheckAnimationEnd(std::wstring _animationName, bool repeat)
+{
+    if (m_animator)
+    {
+        Animation* cur = m_animator->GetCurrent();
+        if (cur && cur->IsFinished())
+        {
+            if (repeat)
+                m_animator->Play(_animationName, PlayMode::Loop);
+            else
+                m_animator->Play(_animationName, PlayMode::Once, 1, 1.f);
+        }
+    }
+}
+
+void Boss3::PressedButton()
+{
+    m_patternCount++;
+    BreakNextShield();
+    GET_SINGLE(ResourceManager)->Play(L"ShieldBreak");
+}
+
+void Boss3::StartDeathSequence()
+{
+    m_isDying = true;
+    m_isCooldown = false;
+    m_curPattern = Boss3Pattern::NONE;
+    m_patternTimer = 0.f;
+
+    if (m_animator)
+    {
+        if (m_BDTexture)
+        {
+            m_animator->CreateAnimation(
+                L"Death",
+                m_BDTexture,
+                { 0.f, 0.f },
+                { 128.f, 256.f},
+                { 128.f, 0.f},
+                12,
+                0.1f
+            );
+        }
+
+        m_animator->Play(L"Death", PlayMode::Once, 1, 1.f);
+        GET_SINGLE(ResourceManager)->Play(L"BossCoreDestroy");
+    }
+}
+
+void Boss3::InitShields()
+{
+    float sizes[4] = { 150.f, 250.f, 300.f, 350.f };
+
+    std::wstring idleNames[4] =
+    {
+        L"ShieldIdle150",
+        L"ShieldIdle250",
+        L"ShieldIdle300",
+        L"ShieldIdle350"
+    };
+
+    std::wstring breakNames[4] =
+    {
+        L"Shield150",
+        L"Shield250",
+        L"Shield300",
+        L"Shield350"
+    };
+
+    Vec2 corePos = GetPos();
+    std::shared_ptr<Scene> scene = GET_SINGLE(SceneManager)->GetCurScene();
+
+    //따로따로 할 예정
+    for (int i = 0; i < 3; ++i)
+    {
+        float s = sizes[i];
+        Boss3Shield* shield = new Boss3Shield(
+            this,
+            idleNames[i],
+            breakNames[i],
+            { s - 100.f, s - 100.f }
+        );
+
+    shield->SetPos(corePos);
+    scene->AddObject(shield, Layer::BOSSCORE);
+
+    m_shields[i] = shield;
+}
+
+m_shieldCount = 3;
+}
+
+void Boss3::ResetShields()
+{
+    for (int i = 0; i < 3; ++i)
+    {
+        if (m_shields[i])
+        {
+            m_shields[i]->SetDead();
+            m_shields[i] = nullptr;
+        }
+    }
+
+    InitShields();
+}
+
+void Boss3::BreakNextShield()
+{
+    for (int i = 3; i >= 0; --i)
+    {
+        if (m_shields[i] &&
+            !m_shields[i]->IsBreaking() &&
+            !m_shields[i]->GetIsDead())
+        {
+            m_shields[i]->StartBreak();
+            --m_shieldCount;
+            break;
+        }
+    }
+}*/
