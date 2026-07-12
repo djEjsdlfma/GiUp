@@ -124,15 +124,12 @@ public class TitleUI : MonoBehaviour
         transitionImage.gameObject.SetActive(true);
         Material transitionMaterial = transitionImage.material;
 
-        // 1. 시작값 2.5로 초기화
         transitionMaterial.SetFloat(shaderPropertyName, startValue);
 
-        // 2. DOTween으로 애니메이션 실행 후 씬 로드
         transitionMaterial.DOFloat(endValue, shaderPropertyName, transitionDuration)
-            .SetEase(EaseGraph) // 취향에 따라 Ease.InOutSine 등으로 변경 가능
+            .SetEase(EaseGraph)
             .OnComplete(() =>
             {
-                // 트랜지션이 완전히 끝나면(0이 되면) 호출됨
                 SceneManager.LoadScene(sceneName);
             });
     }
