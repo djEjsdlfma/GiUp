@@ -68,20 +68,29 @@ public class Player : MonoBehaviour
 
         bool isShoot = false;
 
-
         foreach (Enemy target in targets)
         {
-            Bullet b = Instantiate(_bullet, transform.position, Quaternion.identity);
+            // 1. 적을 향하는 방향 벡터 계산
+            Vector2 direction = target.transform.position - transform.position;
+
+            // 2. 방향 벡터를 각도(도 단위)로 변환
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+            // 3. Z축 기준으로 회전하는 쿼터니언 생성
+            Quaternion rotation = Quaternion.Euler(0f, 0f, angle);
+
+            // 4. 생성 시 회전값(rotation) 적용
+            Bullet b = Instantiate(_bullet, transform.position, rotation);
+
             b.SetBullet(testDamage, testPener);
             b.SetTarget(target);
             isShoot = true;
         }
 
-        if(isShoot)
+        if (isShoot)
         {
             SoundPlayer.Instance.Play("Bullet");
         }
-
     }
 
     private List<Enemy> GetNearestEnemy(int count = 1)
