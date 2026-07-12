@@ -60,11 +60,6 @@ public class Player : MonoBehaviour
             attackTimer = 0f;
             ShootBullet(testWeight);
         }
-
-        //if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
-        //    Time.timeScale += 1.0f;
-        //if (Keyboard.current.rightShiftKey.wasPressedThisFrame)
-        //    Time.timeScale -= 1.0f;
     }
 
     private void ShootBullet(int num = 1)

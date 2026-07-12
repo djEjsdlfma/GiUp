@@ -50,11 +50,6 @@ public class Castle : MonoBehaviour
             health += Mathf.Min(_repairAmount, maxHealth - health);
             _castleUI.SetValue(health, maxHealth);
         }
-
-        if(Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            TakeDamage(500f);
-        }
     }
 
     public void TakeDamage(float amount)
