@@ -36,7 +36,6 @@
 //        MultiGameManager.OnGameStartEvent -= StartGameLogic;
 //    }
 
-//    // 기존 방식대로 ChatManager가 호출해 줄 초기화 함수
 //    public void Init(ChatManager owner)
 //    {
 //        _owner = owner;
@@ -64,7 +63,7 @@
 //    {
 //        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("RandomSeed", out object seedObj))
 //        {
-//            // 적 스포너와 단어 스포너의 난수 패턴이 겹치지 않도록 시드값에 오프셋(+200)을 줍니다.
+//            // 적 스포너와 단어 스포너의 난수 패턴이 겹치지 않도록 시드값에 오프셋(+200)
 //            int seed = (int)seedObj + 200;
 //            _syncedRandom = new System.Random(seed);
 //        }

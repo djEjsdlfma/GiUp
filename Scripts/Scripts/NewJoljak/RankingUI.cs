@@ -45,7 +45,7 @@
 //        Ranking.SetActive(!Ranking.activeSelf);
 //    }
 
-//    // 기존에 만들어진 슬롯 청소
+//  
 //    private void ClearSlots()
 //    {
 //        foreach (Transform child in contentParent)
