@@ -13,8 +13,8 @@
 //    [Header("Score Tracking")]
 //    public int totalPerfectCount = 0;
 //    public int totalBustCount = 0;
-//    public int totalExtraDrawCount = 0; // Ãß°¡ µå·Î¿ì(2Àå ÀÌ»ó) È½¼ö
-//    public GameObject crownIcon; // À¯´ÏÆ¼ ÀÎ½ºÆåÅÍ¿¡¼­ ¿Õ°ü ÀÌ¹ÌÁö(Image) ¿¬°á
+//    public int totalExtraDrawCount = 0; // ì¶”ê°€ ë“œë¡œìš°(2ì¥ ì´ìƒ) íšŸìˆ˜
+//    public GameObject crownIcon; // ìœ ë‹ˆí‹° ì¸ìŠ¤í™í„°ì—ì„œ ì™•ê´€ ì´ë¯¸ì§€(Image) ì—°ê²°
 //    public int plusDiaScore;
 
 //    [Header("Manager References")]
@@ -23,7 +23,7 @@
 
 //    [Header("UI - Game Over Panel")]
 //    public TextMeshProUGUI resultStageText;
-//    public TextMeshProUGUI bestStageText;     // Ãß°¡: ÃÖ°í µµ´Ş ½ºÅ×ÀÌÁö Ç¥½Ã¿ë ÅØ½ºÆ®
+//    public TextMeshProUGUI bestStageText;     // ì¶”ê°€: ìµœê³  ë„ë‹¬ ìŠ¤í…Œì´ì§€ í‘œì‹œìš© í…ìŠ¤íŠ¸
 //    public TextMeshProUGUI resultRewardText;
 //    public GameObject newRecordAlarmObject;
 
@@ -38,7 +38,7 @@
 //        StartNewStage(false);
 //    }
 
-//    // »õ °ÔÀÓ ½ÃÀÛ ½Ã Á¡¼ö ÃÊ±âÈ­
+//    // ìƒˆ ê²Œì„ ì‹œì‘ ì‹œ ì ìˆ˜ ì´ˆê¸°í™”
 //    public void ResetRunData()
 //    {
 //        currentStage = 1;
@@ -66,7 +66,7 @@
 
 //    public void GameOver()
 //    {
-//        // 1. Á¡¼ö °è»ê
+//        // 1. ì ìˆ˜ ê³„ì‚°
 //        int stageScore = currentStage * 100;
 //        int perfectScore = totalPerfectCount * 50;
 //        int bustPenalty = totalBustCount * (-20);
@@ -76,7 +76,7 @@
 //        int finalScore = stageScore + perfectScore + bustPenalty + extraDrawScore + diaScore;
 //        if (finalScore < 0) finalScore = 0;
 
-//        // 2. ÃÖ°í ±â·Ï È®ÀÎ
+//        // 2. ìµœê³  ê¸°ë¡ í™•ì¸
 //        int bestScore = PlayerPrefs.GetInt("BestScore", 0);
 //        int bestStage = PlayerPrefs.GetInt("BestStage", 0);
 
@@ -85,10 +85,10 @@
 //        int earnedPoints = (finalScore - 100) / 10;
 //        string recordText = "";
 
-//        // ¾Ë¸² ¿ÀºêÁ§Æ® ÃÊ±âÈ­ (±âº» ºñÈ°¼ºÈ­)
+//        // ì•Œë¦¼ ì˜¤ë¸Œì íŠ¸ ì´ˆê¸°í™” (ê¸°ë³¸ ë¹„í™œì„±í™”)
 //        if (newRecordAlarmObject != null) newRecordAlarmObject.SetActive(false);
 
-//        // ½Å±â·Ï ´Ş¼º ½Ã ·ÎÁ÷
+//        // ì‹ ê¸°ë¡ ë‹¬ì„± ì‹œ ë¡œì§
 //        if (isNewRecord)
 //        {
 //            PlayerPrefs.SetInt("BestScore", finalScore);
@@ -99,7 +99,7 @@
 //            earnedPoints = Mathf.RoundToInt(earnedPoints * 1.5f);
 //            recordText = "<color=red>NEW RECORD!\n(1.5x Point Bonus)</color>\n";
 
-//            // ½Å±â·Ï ´Ş¼º ¾Ë¸² ¿ÀºêÁ§Æ® È°¼ºÈ­
+//            // ì‹ ê¸°ë¡ ë‹¬ì„± ì•Œë¦¼ ì˜¤ë¸Œì íŠ¸ í™œì„±í™”
 //            if (newRecordAlarmObject != null) newRecordAlarmObject.SetActive(true);
 //        }
 
@@ -107,11 +107,11 @@
 //        System.Numerics.BigInteger currentCoin = System.Numerics.BigInteger.Zero;
 //        System.Numerics.BigInteger.TryParse(coinStr, out currentCoin);
 
-//        // 2. È¹µæÇÑ Æ÷ÀÎÆ®(earnedPoints)¸¦ ±âÁ¸ ÀçÈ­¿¡ ´õÇÔ
-//        // (earnedPoints°¡ int ÀÚ·áÇüÀÌ´õ¶óµµ BigInteger¿Í ´õÇÏ±â ¿¬»êÀÌ °¡´ÉÇÕ´Ï´Ù)
+//        // 2. íšë“í•œ í¬ì¸íŠ¸(earnedPoints)ë¥¼ ê¸°ì¡´ ì¬í™”ì— ë”í•¨
+//        // (earnedPointsê°€ int ìë£Œí˜•ì´ë”ë¼ë„ BigIntegerì™€ ë”í•˜ê¸° ì—°ì‚°ì´ ê°€ëŠ¥í•©ë‹ˆë‹¤)
 //        System.Numerics.BigInteger finalCoin = currentCoin + earnedPoints;
 
-//        // 3. ´Ù½Ã ¹®ÀÚ¿­·Î º¯È¯ÇÏ¿© µ¤¾î¾²±â
+//        // 3. ë‹¤ì‹œ ë¬¸ìì—´ë¡œ ë³€í™˜í•˜ì—¬ ë®ì–´ì“°ê¸°
 //        PlayerPrefs.SetString("PlayerCoin", finalCoin.ToString());
 //        PlayerPrefs.Save();
 
@@ -119,7 +119,7 @@
 
 //        resultStageText.text = $"Stage: {currentStage}";
 
-//        // ÃÖ°í µµ´Ş ½ºÅ×ÀÌÁö Ãâ·Â
+//        // ìµœê³  ë„ë‹¬ ìŠ¤í…Œì´ì§€ ì¶œë ¥
 //        if (bestStageText != null) bestStageText.text = $"Stage: {bestStage}";
 
 //        resultRewardText.text =
@@ -141,28 +141,28 @@
 
 //    public void UpdateStageRecord(int currentStage)
 //    {
-//        // 1. ±âÁ¸ ÃÖ°í ±â·Ï ºÒ·¯¿À±â (±âº»°ªÀº 1)
+//        // 1. ê¸°ì¡´ ìµœê³  ê¸°ë¡ ë¶ˆëŸ¬ì˜¤ê¸° (ê¸°ë³¸ê°’ì€ 1)
 //        int bestStage = PlayerPrefs.GetInt("BestStage", 1);
 
-//        // 2. ÃÖ°í ±â·Ï °»½Å È®ÀÎ ¹× ¿Õ°ü Ç¥½Ã
+//        // 2. ìµœê³  ê¸°ë¡ ê°±ì‹  í™•ì¸ ë° ì™•ê´€ í‘œì‹œ
 //        if (currentStage > bestStage)
 //        {
-//            // ½Å±â·Ï ´Ş¼º! µ¥ÀÌÅÍ ÀúÀå
+//            // ì‹ ê¸°ë¡ ë‹¬ì„±! ë°ì´í„° ì €ì¥
 //            PlayerPrefs.SetInt("BestStage", currentStage);
 //            PlayerPrefs.Save();
 
-//            // ¿Õ°ü UI ÄÑ±â ¹× ¿¬Ãâ
+//            // ì™•ê´€ UI ì¼œê¸° ë° ì—°ì¶œ
 //            ShowCrownEffect();
 //        }
 //        else if (currentStage == bestStage && currentStage > 1)
 //        {
-//            // ½Å±â·ÏÀ» ´Ş¸®°í ÀÖ´Â ÇöÀç »óÅÂÀÏ ¶§µµ ¿Õ°üÀ» À¯ÁöÇÏ°í ½Í´Ù¸é ÄÑÁİ´Ï´Ù.
-//            // (1½ºÅ×ÀÌÁöºÎÅÍ ÄÑÁö¸é ¾î»öÇÏ¹Ç·Î currentStage > 1 Á¶°Ç Ãß°¡)
+//            // ì‹ ê¸°ë¡ì„ ë‹¬ë¦¬ê³  ìˆëŠ” í˜„ì¬ ìƒíƒœì¼ ë•Œë„ ì™•ê´€ì„ ìœ ì§€í•˜ê³  ì‹¶ë‹¤ë©´ ì¼œì¤ë‹ˆë‹¤.
+//            // (1ìŠ¤í…Œì´ì§€ë¶€í„° ì¼œì§€ë©´ ì–´ìƒ‰í•˜ë¯€ë¡œ currentStage > 1 ì¡°ê±´ ì¶”ê°€)
 //            if (crownIcon != null) crownIcon.SetActive(true);
 //        }
 //        else
 //        {
-//            // ÃÖ°í ±â·Ï¿¡ ¹ÌÄ¡Áö ¸øÇÏ¸é ¿Õ°ü ¼û±â±â
+//            // ìµœê³  ê¸°ë¡ì— ë¯¸ì¹˜ì§€ ëª»í•˜ë©´ ì™•ê´€ ìˆ¨ê¸°ê¸°
 //            if (crownIcon != null) crownIcon.SetActive(false);
 //        }
 //    }
@@ -171,10 +171,10 @@
 //    {
 //        if (crownIcon == null) return;
 
-//        // ¿Õ°ü È°¼ºÈ­
+//        // ì™•ê´€ í™œì„±í™”
 //        crownIcon.SetActive(true);
 
-//        // DOTweenÀ» È°¿ëÇØ ¿Õ°üÀÌ »Ğ! ÇÏ°í Æ¢¾î³ª¿À´Â ¿ªµ¿ÀûÀÎ ¿¬Ãâ
+//        // DOTweenì„ í™œìš©í•´ ì™•ê´€ì´ íŠ€ì–´ë‚˜ì˜¤ëŠ” ì—­ë™ì ì¸ ì—°ì¶œ
 //        crownIcon.transform.localScale = Vector3.zero;
 //        crownIcon.transform.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack);
 //    }
